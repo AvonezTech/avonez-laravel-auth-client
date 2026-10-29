@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (
             str_contains(
-                config('services.laravelpassport.scope'),
+                config('avonez-auth-client.scope'),
                 'organization'
             )
         ) {
@@ -42,7 +42,7 @@ return new class extends Migration
     {
         if (
             str_contains(
-                config('services.laravelpassport.scope'),
+                config('avonez-auth-client.scope'),
                 'organization'
             )
         ) {

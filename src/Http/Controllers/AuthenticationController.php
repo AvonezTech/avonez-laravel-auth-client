@@ -133,7 +133,7 @@ class AuthenticationController extends Controller
 
     private function passportUrl(string $path): string
     {
-        return rtrim((string) config('services.laravelpassport.host'), '/') . '/' . ltrim($path, '/');
+        return rtrim((string) config('avonez-auth-client.host'), '/') . '/' . ltrim($path, '/');
     }
 
     /**

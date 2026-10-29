@@ -34,7 +34,7 @@ AVONEZ_AUTH_REDIRECT_URI="${APP_URL}/auth"
 
 The callback URL must also be registered with your Avonez OAuth client. The package's callback route is `/auth`.
 
-The OAuth server host is read from `services.laravelpassport.host`, and the organization migration checks `services.laravelpassport.scope`. Define those values in `config/services.php`:
+The OAuth server host is read from `avonez-auth-client.host`, and the organization migration checks `avonez-auth-client.scope`. Define those values in `config/services.php`:
 
 ```php
 'laravelpassport' => [
@@ -56,7 +56,7 @@ The requested authorization scope is configured separately in the package config
 php artisan vendor:publish --tag=avonez-auth-client-config
 ```
 
-The package config is written to `config/avonez-auth-client.php`. Its default scope is `user:read organizations:read`. If you change the scope, keep it consistent with `services.laravelpassport.scope`, which the organization migration uses to decide whether to create the organization table.
+The package config is written to `config/avonez-auth-client.php`. Its default scope is `user:read organizations:read`. If you change the scope, keep it consistent with `avonez-auth-client.scope`, which the organization migration uses to decide whether to create the organization table.
 
 The OAuth server must provide `/oauth/authorize`, `/oauth/token`, and `/api/user`; `/api/organizations` is also requested when the token includes the `organizations:read` scope. The `/login` and `/auth` routes need session middleware so the OAuth state can be checked on the callback. The package also redirects `/register` to `/login`.
 
