@@ -32,6 +32,8 @@ class AuthenticationController extends Controller
 
     public function redirect(Request $request): RedirectResponse
     {
+        $userModelClass = config('avonez-auth-client.user-model', User::class);
+
         abort_if(
             $request->has('error'),
             403,
@@ -66,7 +68,7 @@ class AuthenticationController extends Controller
 
         $oauthUser = $user['data'];
 
-        $user = User::updateOrCreate(
+        $user = $userModelClass::updateOrCreate(
             ['avonez_id' => $oauthUser['id']],
             [
                 'name' => $oauthUser['name'],
@@ -89,6 +91,9 @@ class AuthenticationController extends Controller
 
     private function handleOrganization(User $user)
     {
+        $organizationModelClass = config('avonez-auth-client.organization-model', Organization::class);
+        $organizationUserModelClass = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+
         $accessToken = $user->access_token;
 
         $scopes = $this->scopesFromJwt($accessToken);
@@ -108,7 +113,7 @@ class AuthenticationController extends Controller
         $oauthOrganizations = $organizations['data'];
 
         foreach ($oauthOrganizations as $oauthOrganization) {
-            $organization = Organization::updateOrCreate(
+            $organization = $organizationModelClass::updateOrCreate(
                 ['avonez_id' => $oauthOrganization['id']],
                 [
                     'slug' => $oauthOrganization['slug'],
@@ -119,7 +124,7 @@ class AuthenticationController extends Controller
                     'website' => $oauthOrganization['website'],
                 ],
             );
-            OrganizationUser::updateOrCreate(
+            $organizationUserModelClass::updateOrCreate(
                 [
                     'organization_id' => $organization->id,
                     'user_id' => $user->id,
