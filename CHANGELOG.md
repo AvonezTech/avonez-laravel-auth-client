@@ -1,5 +1,9 @@
 # Release Notes
 
+## Initial release - 2026-10-29
+
+Fixed middleware
+
 ## [Unreleased](https://github.com/avonez-tech/avonez-auth-client/compare/Initial release...HEAD)
 
 ## [Initial release](https://github.com/avonez-tech/avonez-auth-client/compare/v0.1.0...Initial release) - 2026-10-29
