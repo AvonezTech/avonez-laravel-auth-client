@@ -1,79 +1,123 @@
-<div align="center">
-    <h1>Avonez Auth Client</h1>
-</div>
+# Avonez Auth Client
 
-<p align="center">
-    <a href="https://packagist.org/packages/avonez-tech/avonez-auth-client"><img src="https://img.shields.io/packagist/v/avonez-tech/avonez-auth-client.svg?style=flat-square" alt="Packagist"></a>
-    <a href="https://packagist.org/packages/avonez-tech/avonez-auth-client"><img src="https://img.shields.io/packagist/php-v/avonez-tech/avonez-auth-client.svg?style=flat-square" alt="PHP from Packagist"></a>
-    <a href="https://packagist.org/packages/avonez-tech/avonez-auth-client"><img src="https://badge.laravel.cloud/badge/avonez-tech/avonez-auth-client?style=flat" alt="Laravel versions"></a>
-    <a href="https://github.com/avonez-tech/avonez-auth-client/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/avonez-tech/avonez-auth-client/tests.yml?branch=main&label=Tests&style=flat-square"></a>
-    <a href="https://packagist.org/packages/avonez-tech/avonez-auth-client"><img src="https://img.shields.io/packagist/dt/avonez-tech/avonez-auth-client.svg?style=flat-square" alt="Total Downloads"></a>
-</p>
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/avonez-tech/avonez-auth-client.svg?style=flat-square)](https://packagist.org/packages/avonez-tech/avonez-auth-client)
+[![PHP Version](https://img.shields.io/packagist/php-v/avonez-tech/avonez-auth-client.svg?style=flat-square)](https://packagist.org/packages/avonez-tech/avonez-auth-client)
+[![Tests](https://img.shields.io/github/actions/workflow/status/avonez-tech/avonez-auth-client/tests.yml?branch=main&label=Tests&style=flat-square)](https://github.com/avonez-tech/avonez-auth-client/actions)
 
-Package to connect to avonez account
+Avonez Auth Client adds an OAuth sign-in flow for Avonez accounts to a Laravel application. It redirects users to Avonez, handles the callback, synchronizes the account and its organizations, and signs the user into Laravel.
+
+## Requirements
+
+- PHP 8.3 or later
+- Laravel 12 or 13
+- A configured Avonez OAuth client
 
 ## Installation
 
-You can install the package via Composer:
+Install the package with Composer:
 
 ```bash
 composer require avonez-tech/avonez-auth-client
 ```
 
-You may publish all of the package's resources at once:
+Laravel discovers the service provider automatically. The package registers its routes and migrations and merges its default configuration.
 
-```bash
-php artisan vendor:publish --tag="avonez-auth-client"
+## Configuration
+
+Add your OAuth client credentials and callback URL to the application's `.env` file:
+
+```dotenv
+AVONEZ_AUTH_CLIENT_ID=your-client-id
+AVONEZ_AUTH_CLIENT_SECRET=your-client-secret
+AVONEZ_AUTH_REDIRECT_URI="${APP_URL}/auth"
 ```
 
-Or, you may publish each resource individually:
+The callback URL must also be registered with your Avonez OAuth client. The package's callback route is `/auth`.
 
-### Publishing the Configuration File
+The OAuth server host is read from `services.laravelpassport.host`, and the organization migration checks `services.laravelpassport.scope`. Define those values in `config/services.php`:
 
-```bash
-php artisan vendor:publish --tag="avonez-auth-client-config"
+```php
+'laravelpassport' => [
+    'host' => env('AVONEZ_AUTH_HOST', 'https://account.avonez.com'),
+    'scope' => env('AVONEZ_AUTH_SCOPE', 'user:read organizations:read'),
+],
 ```
 
-### Publishing and Running the Migrations
+For example, the corresponding environment values are:
 
-```bash
-php artisan vendor:publish --tag="avonez-auth-client-migrations"
-php artisan migrate
+```dotenv
+AVONEZ_AUTH_HOST=https://account.avonez.com
+AVONEZ_AUTH_SCOPE="user:read organizations:read"
 ```
 
-### Publishing the Views
+The requested authorization scope is configured separately in the package config. To change it, publish the file and edit `scope`:
 
 ```bash
-php artisan vendor:publish --tag="avonez-auth-client-views"
+php artisan vendor:publish --tag=avonez-auth-client-config
 ```
 
-### Publishing the Public Assets
+The package config is written to `config/avonez-auth-client.php`. Its default scope is `user:read organizations:read`. If you change the scope, keep it consistent with `services.laravelpassport.scope`, which the organization migration uses to decide whether to create the organization table.
+
+The OAuth server must provide `/oauth/authorize`, `/oauth/token`, and `/api/user`; `/api/organizations` is also requested when the token includes the `organizations:read` scope. The `/login` and `/auth` routes need session middleware so the OAuth state can be checked on the callback. The package also redirects `/register` to `/login`.
+
+## User model and database
+
+The package authenticates users using `AvonezAuthClient\Models\User`, which uses the application's `users` table. Configure the application's `users` auth provider to use this model so Laravel can restore the authenticated user from the session:
+
+```php
+// config/auth.php
+'providers' => [
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => AvonezAuthClient\Models\User::class,
+    ],
+],
+```
+
+The package migrations are loaded automatically. Review them before running them, especially if your application already has user data: the user migration assumes a `users` table exists, adds Avonez identity and token columns, and drops `password`, `remember_token`, and `email_verified_at`. Its rollback does not restore those dropped columns. Back up your database and adapt or publish the migrations if those changes do not suit your application.
+
+When the `organizations` scope is enabled, the package also stores synchronized organizations and their relationship to users. The `User` model exposes an `organizations()` relationship.
+
+## Sign-in flow
+
+Send users to `/login` to start Avonez authorization. After consent, Avonez returns them to `/auth`; the package validates the OAuth state, retrieves the profile, updates the local user (and organizations when permitted), logs the user in, and redirects to the intended URL or `/`.
+
+The routes are registered by the package and do not require a facade call:
+
+```blade
+<a href="{{ url('/login') }}">Sign in with Avonez</a>
+```
+
+## Publishing resources
+
+The package publishes configuration, views, public assets, and migrations. Publish all resources with:
 
 ```bash
-php artisan vendor:publish --tag="avonez-auth-client-assets"
+php artisan vendor:publish --tag=avonez-auth-client
 ```
 
-## Usage
+Or publish an individual resource:
 
-<!-- Add a basic usage example here. -->
+```bash
+php artisan vendor:publish --tag=avonez-auth-client-config
+php artisan vendor:publish --tag=avonez-auth-client-views
+php artisan vendor:publish --tag=avonez-auth-client-assets
+php artisan vendor:publish --tag=avonez-auth-client-migrations
+```
 
-## Changelog
+Views use the `avonez-auth-client::` namespace. The package includes a placeholder Artisan command (`avonez-auth-client:placeholder`) for package scaffolding.
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+## Development
 
-## Contributing
+Run the package checks locally:
 
-Thank you for considering contributing to Avonez Auth Client! Please review our [contributing guide](.github/CONTRIBUTING.md) to get started.
+```bash
+composer install
+composer test
+```
 
-## Security Vulnerabilities
-
-Please review [our security policy](.github/SECURITY.md) on how to report security vulnerabilities.
-
-## Credits
-
-- [AvonezTech](https://github.com/avonez-tech)
-- [All Contributors](../../contributors)
+See the [contribution guide](.github/CONTRIBUTING.md) for contribution instructions and the [security policy](.github/SECURITY.md) to report a vulnerability.
 
 ## License
 
-Avonez Auth Client is open-sourced software licensed under the [MIT license](LICENSE.md).
+Avonez Auth Client is open-source software licensed under the [MIT License](LICENSE.md).
