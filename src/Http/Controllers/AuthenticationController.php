@@ -20,10 +20,10 @@ class AuthenticationController extends Controller
         $request->session()->put('oauth_state', $state);
 
         $query = http_build_query([
-            'client_id' => config('services.laravelpassport.client_id'),
-            'redirect_uri' => config('services.laravelpassport.redirect'),
+            'client_id' => config('avonez-auth-client.client_id'),
+            'redirect_uri' => config('avonez-auth-client.redirect'),
             'response_type' => 'code',
-            'scope' => config('services.laravelpassport.scope'),
+            'scope' => config('avonez-auth-client.scope'),
             'state' => $state,
         ]);
 
@@ -49,9 +49,9 @@ class AuthenticationController extends Controller
         $token = Http::asForm()
             ->post($this->passportUrl('/oauth/token'), [
                 'grant_type' => 'authorization_code',
-                'client_id' => config('services.laravelpassport.client_id'),
-                'client_secret' => config('services.laravelpassport.client_secret'),
-                'redirect_uri' => config('services.laravelpassport.redirect'),
+                'client_id' => config('avonez-auth-client.client_id'),
+                'client_secret' => config('avonez-auth-client.client_secret'),
+                'redirect_uri' => config('avonez-auth-client.redirect'),
                 'code' => $request->input('code'),
             ])
             ->throw()

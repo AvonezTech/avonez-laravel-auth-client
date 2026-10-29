@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\Route;
 
 // Route::get('avonez-auth-client', fn () => 'AvonezAuthClient placeholder route.')->name('avonez-auth-client.placeholder');
 
-Route::get('/', function () {
-    return view('welcome');
-});
 
 Route::get('/login', [AuthenticationController::class, 'login'])
     ->name('login');
