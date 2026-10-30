@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('mobile_number')
                 ->before('email');
 
-            $table->string('access_token');
-            $table->string('refresh_token');
+            $table->text('access_token');
+            $table->text('refresh_token');
 
             $table->string('email')
                 ->nullable()
