@@ -32,37 +32,34 @@ AVONEZ_AUTH_CLIENT_SECRET=your-client-secret
 AVONEZ_AUTH_REDIRECT_URI="${APP_URL}/auth"
 ```
 
-The callback URL must also be registered with your Avonez OAuth client. The package's callback route is `/auth`.
+Register the same callback URL with your Avonez OAuth client. The package's callback route is `/auth`.
 
-The OAuth server host is read from `avonez-auth-client.host`, and the organization migration checks `avonez-auth-client.scope`. Define those values in `config/services.php`:
+The package reads these settings from `config/avonez-auth-client.php`:
 
 ```php
-'laravelpassport' => [
-    'host' => env('AVONEZ_AUTH_HOST', 'https://account.avonez.com'),
-    'scope' => env('AVONEZ_AUTH_SCOPE', 'user:read organizations:read'),
-],
+'client_id' => env('AVONEZ_AUTH_CLIENT_ID'),
+'client_secret' => env('AVONEZ_AUTH_CLIENT_SECRET'),
+'redirect' => env('AVONEZ_AUTH_REDIRECT_URI'),
+'host' => 'https://account.avonez.com',
+'scope' => 'user:read organizations:read',
+'user-model' => \AvonezAuthClient\Models\User::class,
+'organization-model' => \AvonezAuthClient\Models\Organization::class,
+'organization-user-model' => \AvonezAuthClient\Models\OrganizationUser::class,
 ```
 
-For example, the corresponding environment values are:
-
-```dotenv
-AVONEZ_AUTH_HOST=https://account.avonez.com
-AVONEZ_AUTH_SCOPE="user:read organizations:read"
-```
-
-The requested authorization scope is configured separately in the package config. To change it, publish the file and edit `scope`:
+Publish the config file to customize the OAuth server host, requested scopes, or model classes:
 
 ```bash
 php artisan vendor:publish --tag=avonez-auth-client-config
 ```
 
-The package config is written to `config/avonez-auth-client.php`. Its default scope is `user:read organizations:read`. If you change the scope, keep it consistent with `avonez-auth-client.scope`, which the organization migration uses to decide whether to create the organization table.
+The default scope is `user:read organizations:read`. The package uses the configured `user-model` to create or update users and the organization model settings when synchronizing organizations. A custom user model must extend `AvonezAuthClient\Models\User`.
 
-The OAuth server must provide `/oauth/authorize`, `/oauth/token`, and `/api/user`; `/api/organizations` is also requested when the token includes the `organizations:read` scope. The `/login` and `/auth` routes need session middleware so the OAuth state can be checked on the callback. The package also redirects `/register` to `/login`.
+The OAuth server must provide `/oauth/authorize`, `/oauth/token`, and `/api/user`. The package also requests `/api/organizations` when the access token includes the `organizations:read` scope.
 
 ## User model and database
 
-The package authenticates users using `AvonezAuthClient\Models\User`, which uses the application's `users` table. Configure the application's `users` auth provider to use this model so Laravel can restore the authenticated user from the session:
+By default, the package authenticates users using `AvonezAuthClient\Models\User`, which uses the application's `users` table. Configure the application's `users` auth provider to use the same model configured as `user-model` so Laravel can restore the authenticated user from the session:
 
 ```php
 // config/auth.php
@@ -74,13 +71,13 @@ The package authenticates users using `AvonezAuthClient\Models\User`, which uses
 ],
 ```
 
-The package migrations are loaded automatically. Review them before running them, especially if your application already has user data: the user migration assumes a `users` table exists, adds Avonez identity and token columns, and drops `password`, `remember_token`, and `email_verified_at`. Its rollback does not restore those dropped columns. Back up your database and adapt or publish the migrations if those changes do not suit your application.
+The package migrations are loaded automatically. Review them before running them, especially if your application already has user data: the user migration assumes a `users` table exists, adds Avonez identity and token columns, makes `email` nullable, and drops `password`, `remember_token`, and `email_verified_at`. Its rollback does not restore those dropped columns. Back up your database and adapt or publish the migrations if those changes do not suit your application.
 
-When the `organizations` scope is enabled, the package also stores synchronized organizations and their relationship to users. The `User` model exposes an `organizations()` relationship.
+The `organizations` table is created only when the configured scope contains `organization`, so set the scope before running migrations. When the access token grants `organizations:read`, the package synchronizes organizations and their user relationship. The `User` model exposes an `organizations()` relationship. Access and refresh tokens are stored on the user record and hidden from its serialized attributes.
 
 ## Sign-in flow
 
-Send users to `/login` to start Avonez authorization. After consent, Avonez returns them to `/auth`; the package validates the OAuth state, retrieves the profile, updates the local user (and organizations when permitted), logs the user in, and redirects to the intended URL or `/`.
+Send users to `/login` to start Avonez authorization. After consent, Avonez returns them to `/auth`; the package validates the OAuth state, retrieves the profile, updates the local user (and organizations when permitted), logs the user in, and redirects to the intended URL or `/`. Both routes use Laravel's `web` middleware, which provides the session needed for OAuth state validation. Requests to `/register` are permanently redirected to `/login`.
 
 The routes are registered by the package and do not require a facade call:
 
@@ -105,7 +102,7 @@ php artisan vendor:publish --tag=avonez-auth-client-assets
 php artisan vendor:publish --tag=avonez-auth-client-migrations
 ```
 
-Views use the `avonez-auth-client::` namespace. The package includes a placeholder Artisan command (`avonez-auth-client:placeholder`) for package scaffolding.
+Views use the `avonez-auth-client::` namespace.
 
 ## Development
 
