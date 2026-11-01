@@ -24,6 +24,7 @@ class User extends Authenticatable
         'email_verified',
         'access_token',
         'refresh_token',
+        'meta'
     ];
 
     protected $hidden = [
@@ -41,6 +42,7 @@ class User extends Authenticatable
         return [
             'mobile_number_verified' => 'boolean',
             'email_verified' => 'boolean',
+            'meta' => 'json',
         ];
     }
 
