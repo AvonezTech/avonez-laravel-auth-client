@@ -12,5 +12,4 @@ return [
     'user-model' => \AvonezAuthClient\Models\User::class,
     'organization-model' => \AvonezAuthClient\Models\Organization::class,
     'organization-user-model' => \AvonezAuthClient\Models\OrganizationUser::class,
-
 ];

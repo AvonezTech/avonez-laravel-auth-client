@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('organization_user', function (Blueprint $table) {
+            $organizationModel = config('avonez-auth-client.organization-model');
+
             $table->id();
-            $table->foreignId('organization_id');
+            $table->foreignIdFor($organizationModel, 'organization_id');
             $table->foreignId('user_id');
             $table->string('designation');
             $table->timestamps();
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('organization_users');
+        Schema::dropIfExists('organization_user');
     }
 };
