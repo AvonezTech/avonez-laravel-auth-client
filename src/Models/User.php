@@ -42,8 +42,17 @@ class User extends Authenticatable
         return [
             'mobile_number_verified' => 'boolean',
             'email_verified' => 'boolean',
-            'meta' => 'json',
+            'meta' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function ($user) {
+            if (is_null($user->meta)) {
+                $user->meta = [];
+            }
+        });
     }
 
     // Relationships
