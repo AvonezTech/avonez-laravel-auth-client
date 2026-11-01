@@ -1,6 +1,6 @@
 <?php
 
-namespace Avonez\AuthClient\Models\Traits;
+namespace AvonezAuthClient\Models\Traits;
 
 trait BelongsToUser
 {
