@@ -78,6 +78,7 @@ class AuthenticationController extends Controller
                 'email_verified' => $oauthUser['email_verified'],
                 'access_token' => $token['access_token'],
                 'refresh_token' => $token['refresh_token'],
+                'meta' => $oauthUser['meta'] ?? [],
             ]
         );
 
