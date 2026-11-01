@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace AvonezAuthClient;
 
 use AvonezAuthClient\Console\Commands\AvonezAuthClientCommand;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\ServiceProvider;
+use League\Uri\Builder;
 
 class AvonezAuthClientServiceProvider extends ServiceProvider
 {
@@ -53,5 +55,21 @@ class AvonezAuthClientServiceProvider extends ServiceProvider
         $this->commands([
             AvonezAuthClientCommand::class,
         ]);
+
+        Blueprint::macro('belongsToOrganization', function (bool $nullable = false) {
+            $organizationModel = config('avonez-auth-client.organization-model');
+            $column = $this->foreignIdFor($organizationModel, 'organization_id');
+            if ($nullable) {
+                $column->nullable();
+            }
+        });
+
+        Blueprint::macro('belongsToUser', function (bool $nullable = false) {
+            $userModel = config('avonez-auth-client.user-model');
+            $column = $this->foreignIdFor($userModel, 'user_id');
+            if ($nullable) {
+                $column->nullable();
+            }
+        });
     }
 }
