@@ -1,5 +1,9 @@
 # Release Notes
 
+## Traits update - 2026-11-01
+
+traits update
+
 ## Initial release - 2026-10-29
 
 Fixed middleware
