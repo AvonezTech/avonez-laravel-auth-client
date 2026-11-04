@@ -1,5 +1,9 @@
 # Release Notes
 
+## Branch Update - 2026-11-04
+
+Branch update
+
 ## Traits update - 2026-11-01
 
 traits update
