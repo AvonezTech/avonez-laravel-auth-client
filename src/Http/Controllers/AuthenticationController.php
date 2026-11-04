@@ -145,6 +145,9 @@ class AuthenticationController extends Controller
         $branchesData = collect($oauthOrganizationUserData)
             ->map(function ($organizationUser) use ($organizations) {
                 $branch = $organizationUser['branch'];
+                if(is_null($branch)){
+                    return null;
+                }
                 $branch['avonez_id'] = $branch['id'];
                 $branch['organization_id'] = $organizations->where('avonez_id', $branch['organization_id'])
                     ->first()
@@ -155,6 +158,7 @@ class AuthenticationController extends Controller
                 unset($branch['id']);
                 return $branch;
             })
+            ->filter()
             ->unique('avonez_id')
             ->toArray();
 
