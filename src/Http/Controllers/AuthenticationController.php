@@ -115,8 +115,6 @@ class AuthenticationController extends Controller
 
         $oauthOrganizationUserData = $organizations['data'];
 
-        dd($oauthOrganizationUserData);
-
         $organizationsData = collect($oauthOrganizationUserData)
             ->map(function ($organizationUser) {
                 $organization =  $organizationUser['organization'];
