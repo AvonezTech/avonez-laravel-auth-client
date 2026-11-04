@@ -57,8 +57,11 @@ class Branch extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'organization_user', 'branch_id', 'user_id')
-            ->using(OrganizationUser::class)
+        $userModel = config('avonez-auth-client.user-model', User::class);
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+        
+        return $this->belongsToMany($userModel, 'organization_user', 'branch_id', 'user_id')
+            ->using($organizationUserModel)
             ->withPivot([
                 'organization_id',
                 'designation'
@@ -68,6 +71,8 @@ class Branch extends Model
 
     public function branchUsers(): HasMany
     {
-        return $this->hasMany(OrganizationUser::class, 'branch_id');
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+
+        return $this->hasMany($organizationUserModel, 'branch_id');
     }
 }

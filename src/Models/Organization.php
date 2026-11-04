@@ -24,7 +24,7 @@ class Organization extends Model
     ];
 
     #[Override]
-    protected function casts()
+    protected function casts(): array
     {
         return [
             'type' => OrganizationType::class,
@@ -37,13 +37,17 @@ class Organization extends Model
 
     public function branches(): HasMany
     {
-        return $this->hasMany(Branch::class);
+        $branchModel = config('avonez-auth-client.branch-model', Branch::class);
+        return $this->hasMany($branchModel);
     }
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)
-            ->using(OrganizationUser::class)
+        $userModel = config('avonez-auth-client.user-model', User::class);
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+
+        return $this->belongsToMany($userModel, 'organization_user', 'organization_id', 'user_id')
+            ->using($organizationUserModel)
             ->withPivot([
                 'branch_id',
                 'designation'
@@ -52,6 +56,8 @@ class Organization extends Model
 
     public function organizationUsers(): HasMany
     {
-        return $this->hasMany(OrganizationUser::class);
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+    
+        return $this->hasMany($organizationUserModel);
     }
 }

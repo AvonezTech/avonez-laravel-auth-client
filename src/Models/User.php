@@ -10,8 +10,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use Notifiable;
 
     protected $table = 'users';
 
@@ -59,8 +58,11 @@ class User extends Authenticatable
 
     public function organizations(): BelongsToMany
     {
-        return $this->belongsToMany(Organization::class)
-            ->using(OrganizationUser::class)
+        $organizationModel = config('avonez-auth-client.organization-model', Organization::class);
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+
+        return $this->belongsToMany($organizationModel, 'organization_user', 'user_id', 'organization_id')
+            ->using($organizationUserModel)
             ->withPivot([
                 'branch_id',
                 'designation'
@@ -69,8 +71,11 @@ class User extends Authenticatable
 
     public function branches(): BelongsToMany
     {
-        return $this->belongsToMany(Branch::class, 'organization_user', 'user_id', 'branch_id')
-            ->using(OrganizationUser::class)
+        $branchModel = config('avonez-auth-client.branch-model', Branch::class);
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+
+        return $this->belongsToMany($branchModel, 'organization_user', 'user_id', 'branch_id')
+            ->using($organizationUserModel)
             ->withPivot([
                 'organization_id',
                 'designation'
@@ -80,11 +85,13 @@ class User extends Authenticatable
 
     public function organizationUsers(): HasMany
     {
-        return $this->hasMany(OrganizationUser::class);
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+        return $this->hasMany($organizationUserModel);
     }
 
     public function branchUsers(): HasMany
     {
-        return $this->hasMany(OrganizationUser::class, 'branch_id');
+        $organizationUserModel = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
+        return $this->hasMany($organizationUserModel, 'branch_id');
     }
 }

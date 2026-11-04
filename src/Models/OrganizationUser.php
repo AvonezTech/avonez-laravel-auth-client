@@ -24,16 +24,19 @@ class OrganizationUser extends Pivot
 
     public function organization(): BelongsTo
     {
-        return $this->belongsTo(Organization::class);
+        $organizationModel = config('avonez-auth-client.organization-model', Organization::class);
+        return $this->belongsTo($organizationModel);
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        $userModel = config('avonez-auth-client.user-model', User::class);
+        return $this->belongsTo($userModel);
     }
 
     public function branch(): BelongsTo
     {
-        return $this->belongsTo(Branch::class);
+        $branchModel = config('avonez-auth-client.branch-model', Branch::class);
+        return $this->belongsTo($branchModel);
     }
 }
