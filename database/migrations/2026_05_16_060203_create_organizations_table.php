@@ -21,6 +21,7 @@ return new class extends Migration
                 $table->id();
                 $table->unsignedBigInteger('avonez_id')
                     ->unique();
+                $table->string('name');
                 $table->string('slug');
                 $table->string('type');
                 $table->string('status');
