@@ -120,6 +120,7 @@ class AuthenticationController extends Controller
                 $organization =  $organizationUser['organization'];
                 $organization['avonez_id'] = $organization['id'];
                 unset($organization['id']);
+                $organization['metadata'] = json_encode($organization['metadata'] ?? []);
                 $organization['created_at'] = now()->toDateTimeString();
                 $organization['updated_at'] = now()->toDateTimeString();
                 return $organization;

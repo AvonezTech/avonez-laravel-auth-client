@@ -11,6 +11,7 @@ return new class extends Migration {
         Schema::table('organizations', function (Blueprint $table) {
             $table->string('name')
                 ->after('avonez_id');
+            $table->text('metadata');
         });
     }
 
