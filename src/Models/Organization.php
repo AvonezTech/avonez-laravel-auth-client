@@ -19,6 +19,7 @@ class Organization extends Model
         'email',
         'phone',
         'website',
+        'metadata',
     ];
 
     #[Override]
@@ -27,6 +28,7 @@ class Organization extends Model
         return [
             'type' => OrganizationType::class,
             'status' => OrganizationStatus::class,
+            'metadata' => 'array',
         ];
     }
 

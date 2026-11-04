@@ -91,7 +91,7 @@ class AuthenticationController extends Controller
         return redirect()->intended('/');
     }
 
-    private function handleOrganization(User $user)
+    private function handleOrganization(User $user): void
     {
         $organizationModelClass = config('avonez-auth-client.organization-model', Organization::class);
         $branchModelClass = config('avonez-auth-client.branch-model', Branch::class);
@@ -113,53 +113,82 @@ class AuthenticationController extends Controller
             ->throw()
             ->json();
 
-        $oauthOrganizations = $organizations['data'];
+        $oauthOrganizationUserData = $organizations['data'];
 
-        foreach ($oauthOrganizations as $oauthOrganization) {
-            $organization = $organizationModelClass::updateOrCreate(
-                ['avonez_id' => $oauthOrganization['id']],
-                [
-                    'slug' => $oauthOrganization['slug'],
-                    'type' => $oauthOrganization['type'],
-                    'status' => $oauthOrganization['status'],
-                    'email' => $oauthOrganization['email'],
-                    'phone' => $oauthOrganization['phone'],
-                    'website' => $oauthOrganization['website'],
-                ],
-            );
+        $organizationsData = collect($oauthOrganizationUserData)
+            ->map(function ($organizationUser) {
+                $organization =  $organizationUser['organization'];
+                $organization['avonez_id'] = $organization['id'];
+                unset($organization['id']);
+                $organization['created_at'] = now()->toDateTimeString();
+                $organization['updated_at'] = now()->toDateTimeString();
+                return $organization;
+            })
+            ->unique('avonez_id')
+            ->toArray();
 
-            foreach ($organization['branches'] as $branch) {
-                $branchModelClass::updateOrCreate(
-                    ['avonez_id' => $branch['id']],
-                    [
-                        'organization_id' => $organization->id,
-                        'name' => $branch['name'],
-                        'slug' => $branch['slug'],
-                        'address' => $branch['address'],
-                        'status' => $branch['status'],
-                        'email' => $branch['email'],
-                        'phone' => $branch['phone'],
-                        'metadata' => $branch['metadata'] ?? [],
-                    ]
-                );
-            }
+        $organizationModelClass::upsert(
+            $organizationsData,
+            ['avonez_id'],
+            ['slug', 'type', 'status', 'email', 'phone', 'website', 'created_at', 'updated_at']
+        );
 
-            $branch = null;
+        $organizations = $organizationModelClass::whereIn(
+            'avonez_id',
+            collect($organizationsData)
+                ->pluck('avonez_id')
+                ->toArray()
+        )
+            ->get();
 
-            if (!is_null($organization['branch_id'])) {
-                $branch = $branchModelClass::where('avonez_id', $organization['branch_id'])->first();
-            }
-            $organizationUserModelClass::updateOrCreate(
-                [
-                    'organization_id' => $organization->id,
-                    'branch_id' => $branch?->id,
-                    'user_id' => $user->id,
-                ],
-                [
-                    'designation' => $oauthOrganization['designation'],
-                ],
-            );
-        }
+        $branches = collect($oauthOrganizationUserData)
+            ->map(function ($organizationUser) use ($organizations) {
+                $branch = $organizationUser['branch'];
+                $branch['avonez_id'] = $branch['id'];
+                $branch['organization_id'] = $organizations->where('avonez_id', $branch['organization_id'])
+                    ->first()
+                    ?->id;
+                $branch['metadata'] = json_encode($branch['metadata'] ?? []);
+                $branch['created_at'] = now()->toDateTimeString();
+                $branch['updated_at'] = now()->toDateTimeString();
+                unset($branch['id']);
+                return $branch;
+            })
+            ->unique('avonez_id');
+
+        $branchModelClass::upsert(
+            $branches->toArray(),
+            ['avonez_id'],
+            ['organization_id', 'name', 'slug', 'address', 'status', 'email', 'phone', 'metadata', 'created_at', 'updated_at']
+        );
+
+        $branches = $branchModelClass::whereIn(
+            'avonez_id',
+            collect($branches)
+                ->pluck('avonez_id')
+                ->toArray()
+        )
+            ->get();
+
+        $organizationUserData = collect($oauthOrganizationUserData)
+            ->map(function ($organizationUserData) use ($organizations, $branches) {
+                $organizationUserData['organization_id'] = $organizations->where('avonez_id', $organizationUserData['organization_id'])
+                    ->first()
+                    ?->id;
+                $organizationUserData['branch_id'] = $branches->where('avonez_id', $organizationUserData['branch_id'])
+                    ->first()
+                    ?->id;
+                $organizationUserData['created_at'] = now()->toDateTimeString();
+                $organizationUserData['updated_at'] = now()->toDateTimeString();
+                unset($organizationUserData['id']);
+                return $organizationUserData;
+            })->toArray();
+
+        $organizationUserModelClass::upsert(
+            $organizationUserData,
+            ['organization_id', 'branch_id', 'user_id'],
+            ['designation', 'created_at', 'updated_at']
+        );
     }
 
     private function passportUrl(string $path): string
