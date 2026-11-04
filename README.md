@@ -44,8 +44,13 @@ The package reads these settings from `config/avonez-auth-client.php`:
 'scope' => 'user:read organizations:read',
 'user-model' => \AvonezAuthClient\Models\User::class,
 'organization-model' => \AvonezAuthClient\Models\Organization::class,
+'branch-model' => \AvonezAuthClient\Models\Branch::class,
 'organization-user-model' => \AvonezAuthClient\Models\OrganizationUser::class,
+'allow-registration' => env('AVONEZ_AUTH_ALLOW_REGISTRATION', true),
+'allow-personal-organization' => env('AVONEZ_AUTH_ALLOW_PERSONAL_ORGANIZATION', true),
 ```
+
+Set `AVONEZ_AUTH_ALLOW_REGISTRATION=false` to prevent creation of new local users while still allowing existing users to sign in. Set `AVONEZ_AUTH_ALLOW_PERSONAL_ORGANIZATION=false` to omit personal organizations during organization synchronization.
 
 Publish the config file to customize the OAuth server host, requested scopes, or model classes:
 
@@ -53,9 +58,9 @@ Publish the config file to customize the OAuth server host, requested scopes, or
 php artisan vendor:publish --tag=avonez-auth-client-config
 ```
 
-The default scope is `user:read organizations:read`. The package uses the configured `user-model` to create or update users and the organization model settings when synchronizing organizations. A custom user model must extend `AvonezAuthClient\Models\User`.
+The default scope is `user:read organizations:read`. The package uses the configured `user-model` to create or update users, and the configured organization, branch, and pivot models when synchronizing memberships. A custom user model must extend `AvonezAuthClient\Models\User`.
 
-The OAuth server must provide `/oauth/authorize`, `/oauth/token`, and `/api/user`. The package also requests `/api/organizations` when the access token includes the `organizations:read` scope.
+The OAuth server must provide `/oauth/authorize`, `/oauth/token`, and `/api/user`. When the access token includes the `organizations:read` scope, the package also requests `/api/organizations` and synchronizes organizations, branches, and user memberships.
 
 ## User model and database
 
@@ -73,7 +78,9 @@ By default, the package authenticates users using `AvonezAuthClient\Models\User`
 
 The package migrations are loaded automatically. Review them before running them, especially if your application already has user data: the user migration assumes a `users` table exists, adds Avonez identity and token columns, makes `email` nullable, and drops `password`, `remember_token`, and `email_verified_at`. Its rollback does not restore those dropped columns. Back up your database and adapt or publish the migrations if those changes do not suit your application.
 
-The `organizations` table is created only when the configured scope contains `organization`, so set the scope before running migrations. When the access token grants `organizations:read`, the package synchronizes organizations and their user relationship. The `User` model exposes an `organizations()` relationship. Access and refresh tokens are stored on the user record and hidden from its serialized attributes.
+The `organizations` table is created only when the configured scope contains `organization`, so keep the default organization scope (or another scope containing `organization`) configured before running migrations. The package also creates the `branches` table and the `organization_user` pivot table. Organization records include their Avonez ID, name, slug, type, status, contact details, website, and metadata. Branch records belong to organizations and include their Avonez ID, name, slug, address, status, contact details, and metadata. Memberships can include a branch and designation.
+
+The `User` model exposes `organizations()` and `branches()` relationships, and the `Organization` model exposes `branches()` and `users()` relationships. Access and refresh tokens are stored on the user record and hidden from its serialized attributes; user and organization metadata are cast to arrays.
 
 ## Sign-in flow
 
@@ -87,7 +94,7 @@ The routes are registered by the package and do not require a facade call:
 
 ## Publishing resources
 
-The package publishes configuration, views, public assets, and migrations. Publish all resources with:
+The package publishes configuration and migrations. Publish all resources with:
 
 ```bash
 php artisan vendor:publish --tag=avonez-auth-client
@@ -97,12 +104,8 @@ Or publish an individual resource:
 
 ```bash
 php artisan vendor:publish --tag=avonez-auth-client-config
-php artisan vendor:publish --tag=avonez-auth-client-views
-php artisan vendor:publish --tag=avonez-auth-client-assets
 php artisan vendor:publish --tag=avonez-auth-client-migrations
 ```
-
-Views use the `avonez-auth-client::` namespace.
 
 ## Development
 
