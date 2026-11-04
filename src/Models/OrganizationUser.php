@@ -2,11 +2,17 @@
 
 namespace AvonezAuthClient\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasTimestamps;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class OrganizationUser extends Pivot
 {
+    use HasTimestamps;
+    
+    public $incrementing = true;
+
+
     protected $fillable = [
         'organization_id',
         'branch_id',
@@ -30,6 +36,4 @@ class OrganizationUser extends Pivot
     {
         return $this->belongsTo(Branch::class);
     }
-
-
 }

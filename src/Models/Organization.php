@@ -13,6 +13,7 @@ class Organization extends Model
 {
     protected $fillable = [
         'avonez_id',
+        'name',
         'slug',
         'type',
         'status',

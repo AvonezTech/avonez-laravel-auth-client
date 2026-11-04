@@ -130,7 +130,7 @@ class AuthenticationController extends Controller
         $organizationModelClass::upsert(
             $organizationsData,
             ['avonez_id'],
-            ['slug', 'type', 'status', 'email', 'phone', 'website', 'created_at', 'updated_at']
+            ['name', 'slug', 'type', 'status', 'email', 'phone', 'website', 'metadata', 'created_at', 'updated_at']
         );
 
         $organizations = $organizationModelClass::whereIn(
@@ -141,7 +141,7 @@ class AuthenticationController extends Controller
         )
             ->get();
 
-        $branches = collect($oauthOrganizationUserData)
+        $branchesData = collect($oauthOrganizationUserData)
             ->map(function ($organizationUser) use ($organizations) {
                 $branch = $organizationUser['branch'];
                 $branch['avonez_id'] = $branch['id'];
@@ -154,17 +154,18 @@ class AuthenticationController extends Controller
                 unset($branch['id']);
                 return $branch;
             })
-            ->unique('avonez_id');
+            ->unique('avonez_id')
+            ->toArray();
 
         $branchModelClass::upsert(
-            $branches->toArray(),
+            $branchesData,
             ['avonez_id'],
             ['organization_id', 'name', 'slug', 'address', 'status', 'email', 'phone', 'metadata', 'created_at', 'updated_at']
         );
 
         $branches = $branchModelClass::whereIn(
             'avonez_id',
-            collect($branches)
+            collect($branchesData)
                 ->pluck('avonez_id')
                 ->toArray()
         )
