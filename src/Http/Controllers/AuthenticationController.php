@@ -2,6 +2,7 @@
 
 namespace AvonezAuthClient\Http\Controllers;
 
+use AvonezAuthClient\Enums\OrganizationType;
 use AvonezAuthClient\Models\Branch;
 use AvonezAuthClient\Models\Organization;
 use AvonezAuthClient\Models\OrganizationUser;
@@ -69,6 +70,14 @@ class AuthenticationController extends Controller
 
         $oauthUser = $user['data'];
 
+        $allowRegistration = config('avonez-auth-client.allow-registration', true);
+
+        $registeredUser = $userModelClass::where('avonez_id', $oauthUser['id'])->first();
+
+        if (!$registeredUser && !$allowRegistration) {
+            abort(403, 'Registration is not allowed.');
+        }
+
         $user = $userModelClass::updateOrCreate(
             ['avonez_id' => $oauthUser['id']],
             [
@@ -93,6 +102,8 @@ class AuthenticationController extends Controller
 
     private function handleOrganization(User $user): void
     {
+        $allowPersonalOrganization = config('avonez-auth-client.allow-personal-organization', true);
+
         $organizationModelClass = config('avonez-auth-client.organization-model', Organization::class);
         $branchModelClass = config('avonez-auth-client.branch-model', Branch::class);
         $organizationUserModelClass = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
@@ -113,7 +124,19 @@ class AuthenticationController extends Controller
             ->throw()
             ->json();
 
-        $oauthOrganizationUserData = $organizations['data'];
+        $rawOauthOrganizationUserData = $organizations['data'];
+
+        $oauthOrganizationUserData = collect($rawOauthOrganizationUserData)
+            ->filter(function ($organizationUser) use ($allowPersonalOrganization) {
+                if ($allowPersonalOrganization) {
+                    return true;
+                }
+
+                $organizationType = $organizationUser['organization']['type'];
+                $isPersonalOrganization = $organizationType === OrganizationType::PERSONAL->value;
+
+                return !$isPersonalOrganization;
+            });
 
         $organizationsData = collect($oauthOrganizationUserData)
             ->map(function ($organizationUser) {

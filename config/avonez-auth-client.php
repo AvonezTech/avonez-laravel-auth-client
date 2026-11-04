@@ -9,8 +9,12 @@ return [
     'redirect' => env('AVONEZ_AUTH_REDIRECT_URI'),
     'host' => 'https://account.avonez.com',
     'scope' => 'user:read organizations:read',
+    
     'user-model' => \AvonezAuthClient\Models\User::class,
     'organization-model' => \AvonezAuthClient\Models\Organization::class,
     'branch-model' => \AvonezAuthClient\Models\Branch::class,
     'organization-user-model' => \AvonezAuthClient\Models\OrganizationUser::class,
+
+    'allow-registration' => env('AVONEZ_AUTH_ALLOW_REGISTRATION', true),
+    'allow-personal-organization' => env('AVONEZ_AUTH_ALLOW_PERSONAL_ORGANIZATION', true)
 ];
