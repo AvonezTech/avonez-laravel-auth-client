@@ -145,7 +145,7 @@ class AuthenticationController extends Controller
         $branchesData = collect($oauthOrganizationUserData)
             ->map(function ($organizationUser) use ($organizations) {
                 $branch = $organizationUser['branch'];
-                if(is_null($branch)){
+                if (is_null($branch)) {
                     return null;
                 }
                 $branch['avonez_id'] = $branch['id'];
@@ -187,7 +187,14 @@ class AuthenticationController extends Controller
                 $organizationUserData['created_at'] = now()->toDateTimeString();
                 $organizationUserData['updated_at'] = now()->toDateTimeString();
                 unset($organizationUserData['id']);
-                return $organizationUserData;
+                return [
+                    'organization_id' => $organizationUserData['organization_id'],
+                    'branch_id' => $organizationUserData['branch_id'],
+                    'user_id' => $organizationUserData['user_id'],
+                    'designation' => $organizationUserData['designation'] ?? null,
+                    'created_at' => $organizationUserData['created_at'],
+                    'updated_at' => $organizationUserData['updated_at'],
+                ];
             })->toArray();
 
         $organizationUserModelClass::upsert(
