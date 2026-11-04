@@ -2,6 +2,7 @@
 
 namespace AvonezAuthClient\Http\Controllers;
 
+use AvonezAuthClient\Models\Branch;
 use AvonezAuthClient\Models\Organization;
 use AvonezAuthClient\Models\OrganizationUser;
 use AvonezAuthClient\Models\User;
@@ -93,6 +94,7 @@ class AuthenticationController extends Controller
     private function handleOrganization(User $user)
     {
         $organizationModelClass = config('avonez-auth-client.organization-model', Organization::class);
+        $branchModelClass = config('avonez-auth-client.branch-model', Branch::class);
         $organizationUserModelClass = config('avonez-auth-client.organization-user-model', OrganizationUser::class);
 
         $accessToken = $user->access_token;
@@ -125,9 +127,32 @@ class AuthenticationController extends Controller
                     'website' => $oauthOrganization['website'],
                 ],
             );
+
+            foreach ($organization['branches'] as $branch) {
+                $branchModelClass::updateOrCreate(
+                    ['avonez_id' => $branch['id']],
+                    [
+                        'organization_id' => $organization->id,
+                        'name' => $branch['name'],
+                        'slug' => $branch['slug'],
+                        'address' => $branch['address'],
+                        'status' => $branch['status'],
+                        'email' => $branch['email'],
+                        'phone' => $branch['phone'],
+                        'metadata' => $branch['metadata'] ?? [],
+                    ]
+                );
+            }
+
+            $branch = null;
+
+            if (!is_null($organization['branch_id'])) {
+                $branch = $branchModelClass::where('avonez_id', $organization['branch_id'])->first();
+            }
             $organizationUserModelClass::updateOrCreate(
                 [
                     'organization_id' => $organization->id,
+                    'branch_id' => $branch?->id,
                     'user_id' => $user->id,
                 ],
                 [

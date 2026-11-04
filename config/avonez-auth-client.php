@@ -11,5 +11,6 @@ return [
     'scope' => 'user:read organizations:read',
     'user-model' => \AvonezAuthClient\Models\User::class,
     'organization-model' => \AvonezAuthClient\Models\Organization::class,
+    'branch-model' => \AvonezAuthClient\Models\Branch::class,
     'organization-user-model' => \AvonezAuthClient\Models\OrganizationUser::class,
 ];

@@ -32,11 +32,17 @@ class Organization extends Model
 
     // Relationships
 
+    public function branches(): HasMany
+    {
+        return $this->hasMany(Branch::class);
+    }
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
             ->using(OrganizationUser::class)
             ->withPivot([
+                'branch_id',
                 'designation'
             ]);
     }

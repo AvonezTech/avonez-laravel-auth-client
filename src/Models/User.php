@@ -62,12 +62,29 @@ class User extends Authenticatable
         return $this->belongsToMany(Organization::class)
             ->using(OrganizationUser::class)
             ->withPivot([
+                'branch_id',
                 'designation'
             ]);
+    }
+
+    public function branches(): BelongsToMany
+    {
+        return $this->belongsToMany(Branch::class, 'organization_user', 'user_id', 'branch_id')
+            ->using(OrganizationUser::class)
+            ->withPivot([
+                'organization_id',
+                'designation'
+            ])
+            ->withTimestamps();
     }
 
     public function organizationUsers(): HasMany
     {
         return $this->hasMany(OrganizationUser::class);
+    }
+
+    public function branchUsers(): HasMany
+    {
+        return $this->hasMany(OrganizationUser::class, 'branch_id');
     }
 }

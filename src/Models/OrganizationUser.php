@@ -9,6 +9,7 @@ class OrganizationUser extends Pivot
 {
     protected $fillable = [
         'organization_id',
+        'branch_id',
         'user_id',
         'designation',
     ];
@@ -24,4 +25,11 @@ class OrganizationUser extends Pivot
     {
         return $this->belongsTo(User::class);
     }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+
 }
