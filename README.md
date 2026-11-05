@@ -82,6 +82,23 @@ The `organizations` table is created only when the configured scope contains `or
 
 The `User` model exposes `organizations()` and `branches()` relationships, and the `Organization` model exposes `branches()` and `users()` relationships. Access and refresh tokens are stored on the user record and hidden from its serialized attributes; user and organization metadata are cast to arrays.
 
+### Migration helpers
+
+The package registers `Blueprint` helpers for adding foreign keys that follow the configured model classes:
+
+```php
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+Schema::table('projects', function (Blueprint $table) {
+    $table->belongsToOrganization();
+    $table->belongsToUser(nullable: true);
+    $table->belongsToBranch();
+});
+```
+
+`belongsToOrganization()`, `belongsToUser()`, and `belongsToBranch()` each create the corresponding `organization_id`, `user_id`, or `branch_id` foreign key. They use the configured organization, user, and branch models. By default, the column is required and cascades on delete; pass `nullable: true` to make it nullable and set the foreign key to `null` when the related record is deleted.
+
 ## Sign-in flow
 
 Send users to `/login` to start Avonez authorization. After consent, Avonez returns them to `/auth`; the package validates the OAuth state, retrieves the profile, updates the local user (and organizations when permitted), logs the user in, and redirects to the intended URL or `/`. Both routes use Laravel's `web` middleware, which provides the session needed for OAuth state validation. Requests to `/register` are permanently redirected to `/login`.
