@@ -72,17 +72,17 @@ class AuthenticationController extends Controller
 
         $allowRegistration = config('avonez-auth-client.allow-registration', true);
 
-        $registeredUser = $userModelClass::where('avonez_id', $oauthUser['id'])->first();
+        $registeredUser = $userModelClass::where('mobile_number', $oauthUser['mobile_number'])->first();
 
         if (!$registeredUser && !$allowRegistration) {
             abort(403, 'Registration is not allowed.');
         }
 
         $user = $userModelClass::updateOrCreate(
-            ['avonez_id' => $oauthUser['id']],
+            ['mobile_number' => $oauthUser['mobile_number']],
             [
+                'avonez_id' => $oauthUser['id'],
                 'name' => $oauthUser['name'],
-                'mobile_number' => $oauthUser['mobile_number'],
                 'email' => $oauthUser['email'],
                 'mobile_number_verified' => $oauthUser['mobile_number_verified'],
                 'email_verified' => $oauthUser['email_verified'],
