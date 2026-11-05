@@ -81,5 +81,18 @@ class AvonezAuthClientServiceProvider extends ServiceProvider
                     ->cascadeOnDelete();
             }
         });
+
+        Blueprint::macro('belongsToBranch', function (bool $nullable = false) {
+            $branchModel = config('avonez-auth-client.branch-model');
+            $column = $this->foreignIdFor($branchModel, 'branch_id');
+            if ($nullable) {
+                $column->nullable()
+                    ->constrained()
+                    ->nullOnDelete();
+            } else {
+                $column->constrained()
+                    ->cascadeOnDelete();
+            }
+        });
     }
 }
